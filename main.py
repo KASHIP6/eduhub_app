@@ -3,11 +3,10 @@ import streamlit as st
 import sqlite3
 from database import create_tables
 
-# Custom CSS for styling (swapped colors and top navigation bar)
+# Custom CSS for styling (swapped colors)
 st.markdown(
     f"""
     <style>
-    /* General styling */
     .stApp {{
         background-color: #585E6C;  /* Steel Blue Gray */
         color: #B5BBC9;  /* Cool Gray */
@@ -19,32 +18,6 @@ st.markdown(
     .stTextInput>div>div>input {{
         background-color: #585E6C;  /* Steel Blue Gray */
         color: #B5BBC9;  /* Cool Gray */
-    }}
-
-    /* Top navigation bar */
-    .navbar {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: #B5BBC9;  /* Cool Gray */
-        padding: 10px;
-        z-index: 1000;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        display: flex;
-        justify-content: space-around;
-    }}
-    .navbar button {{
-        background-color: #585E6C;  /* Steel Blue Gray */
-        color: #B5BBC9;  /* Cool Gray */
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
-        font-size: 16px;
-        border-radius: 5px;
-    }}
-    .navbar button:hover {{
-        background-color: #4A505E;  /* Darker Steel Blue Gray */
     }}
     </style>
     """,
@@ -62,39 +35,6 @@ def check_login(username, password):
     user = cursor.fetchone()
     conn.close()
     return user
-
-# Function to register a new user
-def register_user(username, password, role):
-    conn = sqlite3.connect('eduhub.db')
-    cursor = conn.cursor()
-    try:
-        cursor.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)", (username, password, role))
-        conn.commit()
-        conn.close()
-        return True
-    except sqlite3.IntegrityError:
-        conn.close()
-        return False  # Username already exists
-
-# Registration Page (Default Page)
-def registration_page():
-    st.title("EDUHUB: Comprehensive College Management System")
-    st.subheader("New User Registration")
-
-    # Registration form
-    username = st.text_input("Choose a Username")
-    password = st.text_input("Choose a Password", type="password")
-    role = st.selectbox("Select Role", ["student", "faculty"])
-
-    if st.button("Register"):
-        if register_user(username, password, role):
-            st.success("Registration successful! Please login.")
-            st.session_state['page'] = 'login'  # Redirect to login page after registration
-        else:
-            st.error("Username already exists. Please choose a different username.")
-
-    if st.button("Login"):
-        st.session_state['page'] = 'login'  # Redirect to login page
 
 # Login Page
 def login_page():
@@ -115,35 +55,18 @@ def login_page():
         else:
             st.error("Invalid username or password")
 
-    if st.button("New User Registration"):
-        st.session_state['page'] = 'registration'  # Redirect to registration page
-
 # Main Application
 def main_app():
     st.title("EDUHUB: Comprehensive College Management System")
 
-    # Top navigation bar
-    st.markdown(
-        """
-        <div class="navbar">
-            <button onclick="window.location.href='#admin'">Admin</button>
-            <button onclick="window.location.href='#student'">Student</button>
-            <button onclick="window.location.href='#faculty'">Faculty</button>
-            <button onclick="window.location.href='#examination'">Examination</button>
-            <button onclick="window.location.href='#finance'">Finance</button>
-            <button onclick="window.location.href='#reports'">Reports</button>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    # Determine the selected module based on role
+    # Sidebar navigation
+    st.sidebar.title("Navigation")
     if st.session_state['role'] == 'admin':
-        menu = st.radio("Choose a module", ["Admin", "Student", "Faculty", "Examination", "Finance", "Reports"], key="menu")
+        menu = st.sidebar.radio("Choose a module", ["Admin", "Student", "Faculty", "Examination", "Finance", "Reports"])
     elif st.session_state['role'] == 'student':
-        menu = st.radio("Choose a module", ["Student"], key="menu")
+        menu = st.sidebar.radio("Choose a module", ["Student"])
     elif st.session_state['role'] == 'faculty':
-        menu = st.radio("Choose a module", ["Faculty"], key="menu")
+        menu = st.sidebar.radio("Choose a module", ["Faculty"])
 
     if menu == "Admin":
         st.header("Admin Module")
@@ -206,12 +129,10 @@ def main_app():
 
 # Initialize session state for page navigation
 if 'page' not in st.session_state:
-    st.session_state['page'] = 'registration'  # Default to registration page
+    st.session_state['page'] = 'login'  # Default to login page
 
 # Page Navigation
-if st.session_state['page'] == 'registration':
-    registration_page()
-elif st.session_state['page'] == 'login':
+if st.session_state['page'] == 'login':
     login_page()
 elif st.session_state['page'] == 'main':
     if 'logged_in' in st.session_state and st.session_state['logged_in']:
